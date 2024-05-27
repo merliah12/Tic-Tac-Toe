@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="style.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Rubik+Bubbles&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Rubik+Bubbles&family=Rubik:ital,wght@0,300..900;1,300..900&display=swap" rel="stylesheet">
+<title>Tic Tac Toe</title>
+<style>
+    .board {
+        display: grid;
+        grid-template-columns: repeat(3, 100px);
+        grid-template-rows: repeat(3, 100px);
+        gap: 60px;
+        margin-bottom: 20px;
+        margin-left: 34%;
+    }
+    .cell {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font-size: 36px;
+        background-color: #f0f0f0;
+        cursor: pointer;
+        border-radius: 10px;
+        transition: 1s;
+        width: 20vh;
+        height: 20vh;
+    }
+    .cell:hover{
+        background-color: #5d5959;
+        color: white;
+    }
+</style>
+</head>
+<body>
+    <h1 >Tic Tac Toe</h1>
+<div id="board" class="board"></div>
+<button id="startButton">Start Game</button>
+
+<script>
+    const NOUGHTS = 0;
+    const CROSSES = 1;
+    const BORDER = 2;
+    const EMPTY = 3;
+    const HUMANWIN = 0;
+    const COMPWIN = 1;
+    const DRAW = 2;
+
+    const Directions = [1, 5, 4, 6];
+    const ConvertTo25 = [6, 7, 8, 11, 12, 13, 16, 17, 18];
+    const InMiddle = 4;
+    const Corners = [0, 2, 6, 8];
+
+    let ply = 0;
+    let positions = 0;
+    let maxPly = 0;
+
+    let board = [];
+
+    function InitialiseBoard() {
+        for (let index = 0; index < 25; ++index) {
+            board[index] = BORDER;
+        }
+
+        for (let index = 0; index < 9; ++index) {
+            board[ConvertTo25[index]] = EMPTY;
+        }
+    }
+
+    function PrintBoard() {
+        const boardElement = document.getElementById('board');
+        boardElement.innerHTML = '';
+
+        for (let index = 0; index < 9; ++index) {
+            const cell = document.createElement('div');
+            cell.classList.add('cell');
+            cell.textContent = getSymbol(board[ConvertTo25[index]]);
+            cell.addEventListener('click', () => {
+                if (board[ConvertTo25[index]] === EMPTY) {
+                    makeMove(ConvertTo25[index], HUMANWIN);
+                    computerMove();
+                }
+            });
+            boardElement.appendChild(cell);
+        }
+    }
+
+    function getSymbol(value) {
+        switch (value) {
+            case NOUGHTS:
+                return 'X';
+            case CROSSES:
+                return 'O';
+            default:
+                return '';
+        }
+    }
+
+    function makeMove(sq, side) {
+        board[sq] = side;
+        PrintBoard();
+    }
+
+    function computerMove() {
+        ply = 0;
+        positions = 0;
+        maxPly = 0;
+        const best = MinMax(CROSSES);
+        makeMove(best, CROSSES);
+        checkGameOver();
+    }
+
+    function MinMax(side) {
+        let bestScore = -2;
+        let bestMove = -1;
+
+        if (ply > maxPly) maxPly = ply;
+        positions++;
+
+        if (ply > 0) {
+            const score = EvalForWin(side);
+            if (score !== 0) {
+                return score;
+            }
+        }
+
+        for (let index = 0; index < 9; ++index) {
+            if (board[ConvertTo25[index]] === EMPTY) {
+                const Move = ConvertTo25[index];
+                board[Move] = side;
+                ply++;
+                const score = -MinMax(side ^ 1);
+                if (score > bestScore) {
+                    bestScore = score;
+                    bestMove = Move;
+                }
+                board[Move] = EMPTY;
+                ply--;
+            }
+        }
+
+        if (bestMove === -1) {
+            bestScore = FindThreeInARowAllBoard(side);
+        }
+
+        return ply !== 0 ? bestScore : bestMove;
+    }
+
+    function EvalForWin(us) {
+        if (FindThreeInARowAllBoard(us) !== 0)
+            return 1;
+        if (FindThreeInARowAllBoard(us ^ 1) !== 0)
+            return -1;
+
+        return 0;
+    }
+
+    function FindThreeInARowAllBoard(us) {
+        let threeFound = 0;
+
+        for (let index = 0; index < 9; ++index) {
+            if (board[ConvertTo25[index]] === us) {
+                if (FindThreeInARow(ConvertTo25[index], us) === 3) {
+                    threeFound = 1;
+                    break;
+                }
+            }
+        }
+        return threeFound;
+    }
+
+    function FindThreeInARow(ourindex, us) {
+        let threeCount = 1;
+
+        for (let DirIndex = 0; DirIndex < 4; ++DirIndex) {
+            const Dir = Directions[DirIndex];
+            threeCount += GetNumForDir(ourindex + Dir, Dir, us);
+            threeCount += GetNumForDir(ourindex + Dir * -1, Dir * -1, us);
+            if (threeCount === 3) {
+                break;
+            }
+            threeCount = 1;
+        }
+        return threeCount;
+    }
+
+    function GetNumForDir(startSq, dir, us) {
+        let found = 0;
+        while (board[startSq] !== BORDER) {
+            if (board[startSq] !== us) {
+                break;
+            }
+            found++;
+            startSq += dir;
+        }
+        return found;
+    }
+
+    function checkGameOver() {
+    if (FindThreeInARowAllBoard(CROSSES) === 1) {
+        setTimeout(() => {
+            alert("Computer Wins!");
+            InitialiseBoard();
+            PrintBoard();
+        }, 1000); // Ritardo di 1 secondo (1000 millisecondi) prima di mostrare l'alert
+    } else if (!HasEmpty()) {
+        setTimeout(() => {
+            alert("It's a draw!");
+            InitialiseBoard();
+            PrintBoard();
+        }, 1000); // Ritardo di 1 secondo (1000 millisecondi) prima di mostrare l'alert
+    }
+}
+
+
+
+
+    function HasEmpty() {
+        for (let index = 0; index < 9; ++index) {
+            if (board[ConvertTo25[index]] === EMPTY) return true;
+        }
+        return false;
+    }
+
+    function startGame() {
+        InitialiseBoard();
+        PrintBoard();
+    }
+
+    document.getElementById('startButton').addEventListener('click', startGame);
+
+    startGame(); // Start the game initially
+</script>
+</body>
+</html>

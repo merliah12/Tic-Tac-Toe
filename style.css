@@ -1,0 +1,27 @@
+h1{
+    text-align: center;
+    color: rgb(108, 110, 111);
+    font-family: "Rubik Bubbles", system-ui;
+    font-size: 10vh;
+}
+button{
+    margin-left: 45%;
+    margin-top: 3%;
+    height: 5vh;
+    width: 20vh;
+    border-radius: 10px;
+    transition: 1s;
+    box-shadow: 0px 0px 5px 2px rgba(47, 47, 48, 0.751);
+    font-family: "Rubik", sans-serif;
+}
+
+button:hover{
+    background-color: black;
+    color: white;
+    box-shadow: 0px 0px 5px 5px rgba(47, 47, 48, 0.751);
+}
+body{
+    background-color: lavender;
+    font-family: "Rubik", sans-serif;
+    user-select: none;
+}
